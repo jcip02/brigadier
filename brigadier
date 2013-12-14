@@ -244,8 +244,9 @@ when running the installer out of 'system32'." % output_dir)
             else:
                 shutil.rmtree(landing_dir)
 
-        status("Making directory %s.." % landing_dir)
-        os.mkdir(landing_dir)
+        #disabling so the copytree will work at the end
+        #status("Making directory %s.." % landing_dir)
+        #os.mkdir(landing_dir)   
 
 #        arc_workdir = tempfile.mkdtemp(prefix="bootcamp-unpack_") #Disabled to make brigadier do it's work in outputdir
         arc_workdir = os.path.join(output_dir, 'bootcamp-unpack') #Added to make brigadier to it's work in outputdir
@@ -305,9 +306,14 @@ when running the installer out of 'system32'." % output_dir)
                             os.path.join(arc_workdir, 'pkg')])
             status("Extracting Payload...")
             subprocess.call(['/usr/bin/tar', '-xz', '-C', arc_workdir, '-f', os.path.join(arc_workdir, 'pkg', 'Payload')])
-            output_file = os.path.join(landing_dir, 'WindowsSupport.dmg')
-            shutil.move(os.path.join(arc_workdir, 'Library/Application Support/BootCamp/WindowsSupport.dmg'),
-                output_file)
+
+            #Disabling to reduce unnecessary IO
+            # output_file = os.path.join(landing_dir, 'WindowsSupport.dmg')
+            # shutil.move(os.path.join(arc_workdir, 'Library/Application Support/BootCamp/WindowsSupport.dmg'),
+            #     output_file)
+            # status("Extracted to %s." % output_file)
+            
+            output_file = os.path.join(arc_workdir, 'Library/Application Support/BootCamp/WindowsSupport.dmg')
             status("Extracted to %s." % output_file)
 
             # If we were to also copy out the contents from the .dmg we might do it like this, but if you're doing this
@@ -322,11 +328,10 @@ when running the installer out of 'system32'." % output_dir)
             
             
             #Actually Extracting the Bootcamp Drivers
-            mountxml = getCommandOutput(['/usr/bin/hdiutil', 'attach', os.path.join(landing_dir, 'WindowsSupport.dmg'), '-mountrandom', '/tmp', '-plist', '-nobrowse'])
+            mountxml = getCommandOutput(['/usr/bin/hdiutil', 'attach', os.path.join(arc_workdir, 'Library/Application Support/BootCamp/WindowsSupport.dmg'), '-mountrandom', '/tmp', '-plist', '-nobrowse'])
             mountplist = plistlib.readPlistFromString(mountxml)
             mntpoint = mountplist['system-entities'][0]['mount-point']
-            status("mntpoint is %s" % mntpoint)
-            shutil.copytree(mntpoint, os.path.join(output_dir, '1'))
+            shutil.copytree(mntpoint, landing_dir)
             subprocess.call(['/usr/bin/hdiutil', 'eject', mntpoint])
 
             shutil.rmtree(arc_workdir)
